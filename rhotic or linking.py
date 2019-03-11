@@ -1,3 +1,15 @@
+# Author: Dan Villarreal, daniel.j.villarreal@gmail.com
+# Date: 17 Oct 2018
+# LaBB-CAT Version: 20190109.1225 
+# Layer Scope: segment
+# Layer Type: text
+# Layer Alignment: none
+# Assumes Existing Layers: turns, transcript, orthography, segments, gam segments, foll segment, foll pause
+#
+# Segments from the "gam phones" layer that consist of any phoneme followed by /r/. Differentiates linking /r/ (tagged "linking") vs. rhotic /r/ (tagged "rhotic") based on following segment and following pause layers. Does not tag "er", and corrects some common issues.
+# MOUTH-R/PRICE-R/FACE-R are treated differently, as they are each represented as two phones in CELEX (6@/2@/1@). In these cases, both the nucleus and glide are tagged: "rh-nuc" & "rh-glide" or "li-nuc" & "li-glide". (These annotations cannot be combined since that would break the association with the segments layer.) For example, if "fired" is tagged as / f 2 @ d / in CELEX and thus / f 2r <NA> d / in gam segments, then the /2/ is tagged as "rh-nuc" and the /@/ as "rh-glide".
+# To find all rhotic tokens, search this layer using the pattern rh.* . To find all linking tokens, search this layer using the pattern li.* .
+
 import re
 # regular expression for identifying phones that might be rhotic
 rhoticPattern = re.compile(".+r")

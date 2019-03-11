@@ -1,3 +1,13 @@
+# Author: Dan Villarreal, daniel.j.villarreal@gmail.com
+# Date: 31 Jan 2019
+# LaBB-CAT Version: 20190109.1225 
+# Layer Scope: segment
+# Layer Type: text
+# Layer Alignment: none
+# Assumes Existing Layers: turns, transcript, rhotic or linking, 
+#
+# Tags rhotic or linking tokens with the Wells lexical set. Only tags nuclei, not glides.
+
 import re
 # regular expression for identifying phones tagged as glide
 glidePattern = re.compile("(rh|li)-glide")
@@ -41,7 +51,7 @@ for turn in transcript.list("turns"):
             tag = segment.createTag(thisLayer.id, "NURSE")
           
           if segment.label == "6":
-            tag = segment.createTag(thisLayer.id, "MOUTH")
+            tag = segment.createTag(thisLayer.id, "MOUTH-R")
           
           if segment.label == "7":
             tag = segment.createTag(thisLayer.id, "NEAR")

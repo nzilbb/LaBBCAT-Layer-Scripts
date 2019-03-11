@@ -1,3 +1,13 @@
+# Author: Dan Villarreal, daniel.j.villarreal@gmail.com
+# Date: 18 Jan 2019
+# LaBB-CAT Version: 20190109.1225 
+# Layer Scope: segment
+# Layer Type: text
+# Layer Alignment: none
+# Assumes Existing Layers: turns, transcript, segments, coded R-hand, coded R-classifier
+#
+# Tags rhotic tokens with coding method (by hand vs. by the classifier), to facilitate finding both hand-coded and classifier-coded tokens with a single search.
+
 import re
 # regular expression for identifying overlaps
 overlapPattern = re.compile("[<>]")

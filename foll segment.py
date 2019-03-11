@@ -1,3 +1,13 @@
+# Author: Dan Villarreal, daniel.j.villarreal@gmail.com
+# Date: 17 Oct 2018
+# LaBB-CAT Version: 20190109.1225 
+# Layer Scope: segment
+# Layer Type: phonological
+# Layer Alignment: none
+# Assumes Existing Layers: turns, transcript, segments
+# 
+# Tags the segment with the following segment, unless interrupted by an overlap marked by angle brackets
+
 import re
 # regular expression for identifying overlaps
 overlapPattern = re.compile("[<>]")
