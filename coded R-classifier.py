@@ -8,7 +8,7 @@
 # 
 # Maps classifier probabilities to Absent or Present based on threshhold of 0.579065
 
-threshhold = 0.579065
+threshhold = 0.566435
 
 # for each turn in the transcript
 for turn in transcript.list("turns"):
