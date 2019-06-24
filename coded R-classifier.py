@@ -6,9 +6,9 @@
 # Layer Alignment: none
 # Assumes Existing Layers: R classifier prob
 # 
-# Maps classifier probabilities to Absent or Present based on threshhold of 0.579065
+# Maps classifier probabilities to Absent or Present based on threshhold of 0.5665255
 
-threshhold = 0.566435
+threshhold = 0.5665255
 
 # for each turn in the transcript
 for turn in transcript.list("turns"):
