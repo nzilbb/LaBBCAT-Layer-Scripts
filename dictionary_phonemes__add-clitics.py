@@ -48,9 +48,7 @@ for turn in transcript.list("turn"):
         orthoLabel = word.my("orthography").label
         
         ##Only proceed if there's a phonemes_no_clitic tag (which might be missing if there's a pronounce code and/or a custom dictionary entry matching the version with a clitic)
-        phonemesBase = word.my("phonemes_no_clitic")
-        
-        if phonemesBase is not None:
+        for phonemesBase in word.list("phonemes_no_clitic"):
           ##Get base label and stem phonemes
           orthoBaseLabel = orthoBase.label
           currPhonemes = phonemesBase.label
@@ -106,5 +104,3 @@ for turn in transcript.list("turn"):
           tag = word.createTag("dictionary-phonemes", currPhonemes)
           log("Tagged word " + orthoLabel + " with " + currPhonemes)
           
-        else:
-          log("Did not tag word " + orthoLabel + " (no phonemes_no_clitic tag)")
