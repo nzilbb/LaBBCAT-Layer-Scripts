@@ -2,8 +2,8 @@
 # dictionary_phonemes auxiliary: add clitics
 # (Python-managed LaBB-CAT layer auxiliary)
 #
-# Author: Dan Villarreal
-# Date: 31 Jul 2023
+# Author: Dan Villarreal and Robert Fromont
+# Date: 1 Aug 2023
 # LaBB-CAT Version: 20230731.1146
 # Layer Scope: word
 # Layer Type: phonological
@@ -16,7 +16,8 @@
 #
 # Description: 
 #   Add clitic phonemes to base phonemes specified in phonemes_no_clitic.
-#   Does not override existing annotations (i.e., forms specified in Unisyn or custom dictionary)
+#   Does not override existing annotations (i.e., forms, cliticized or not, 
+#     hard-coded into Unisyn or custom dictionary)
 #
 
 import re
@@ -35,19 +36,24 @@ for turn in transcript.list("turn"):
   for word in turn.list("word"):
     if annotator.cancelling: break # cancelled by the user
     
-    ##Don't override existing entries
+    ##Don't override existing entries (forms, cliticized or not, hard-coded 
+    ##  into Unisyn or custom dictionary)
     phonemes = word.my("dictionary-phonemes")
     if phonemes is None:
       
-      ##Only proceed if there's an orthography_no_clitic tag *and* 
+      ##Only proceed if there's an orthography_no_clitic tag
       orthoBase = word.my("orthography_no_clitic")
-      
       if orthoBase is not None:
         
         ##Get orthography label
         orthoLabel = word.my("orthography").label
         
-        ##Only proceed if there's a phonemes_no_clitic tag (which might be missing if there's a pronounce code and/or a custom dictionary entry matching the version with a clitic)
+        ##Loop over existing phonemes_no_clitic tag(s)
+        ##N.B. The set of words with no preexisting dictionary-phonemes tag
+        ##  *and* no phonemes_no_clitic tag includes those with:
+        ##  - a pronounce code
+        ##  - no dictionary entry (Unisyn or custom) matching base form (incl.
+        ##    redactions)
         for phonemesBase in word.list("phonemes_no_clitic"):
           ##Get base label and stem phonemes
           orthoBaseLabel = orthoBase.label
@@ -103,4 +109,3 @@ for turn in transcript.list("turn"):
           ##Modify tag
           tag = word.createTag("dictionary-phonemes", currPhonemes)
           log("Tagged word " + orthoLabel + " with " + currPhonemes)
-          
