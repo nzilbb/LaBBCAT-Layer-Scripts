@@ -2,9 +2,12 @@
 # ADD HEADER
 #
 
+##Trigger layer manager to make unisyn syllables updateable
+# .createTag("unisyn syllables", newLabel)
+
 import re
 # regular expression for identifying non-initial stress markers
-stressPattern = re.compile("(.+)(['\"])(.*)")
+stressPattern = re.compile("(.+)(['\",])(.*)")
 
 ##For each turn in the transcript
 for turn in transcript.list("turn"):
@@ -30,7 +33,6 @@ for turn in transcript.list("turn"):
           
           ##Move the stress marker to the start of the syllable
           newLabel = re.sub(stressPattern, "\\2\\1\\3", currLabel)
-          ##NOTE: label-setting doesn't currently work (but newLabel is constructed correctly)
           # syllable.setLabel(newLabel)
           syllable.label = newLabel
           log("Changed syllable label " + currLabel + " to " + newLabel)
