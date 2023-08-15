@@ -1,6 +1,4 @@
 #
-# NOT FUNCTIONAL RIGHT NOW
-#
 # Auxiliary for **unisyn syllables**:
 # Label syllables based on pronounce code:
 # If a pronounce code has syllable breaks, reconstruct syllable alignments from 
@@ -64,10 +62,8 @@ for turn in transcript.list("turn"):
             
             ##If matching, create annotation based on segment anchors
             if currSeg == syllNoStress:
-              newSyll = word.addAnnotation(Annotation(word.getId(), pronLabel, "unisyn syllables"))
+              start = segList[startSeg]
+              end = segList[segIdx - 1]
+              newSyll = transcript.createSpan(start, end, "unisyn syllables", syll)
               
-              start = segList[startSeg].getStart()
-              newSyll.setStart(start)
-              end = segList[segIdx - 1].getEnd()
-              newSyll.setEnd(end)
-              log("Tagged word " + word.label + " with " + syll + " between " + '%.3f' % start.getOffset() + " and " + '%.3f' % end.getOffset() + " seconds")
+              log("Tagged word " + word.label + " with " + syll + " between " + '%.3f' % start.getStart().getOffset() + " and " + '%.3f' % end.getEnd().getOffset() + " seconds")
