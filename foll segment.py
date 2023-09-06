@@ -1,42 +1,59 @@
-# Author: Dan Villarreal, daniel.j.villarreal@gmail.com
-# Date: 17 Oct 2018
-# LaBB-CAT Version: 20190109.1225 
+#
+# foll segment
+# (Python-managed LaBB-CAT layer)
+#
+# Author: Dan Villarreal
+# Date: 6 Sep 2023
+# LaBB-CAT Version: 20230901.1521
 # Layer Scope: segment
 # Layer Type: phonological
-# Layer Alignment: none
-# Assumes Existing Layers: turns, transcript, segments
-# 
-# Tags the segment with the following segment, unless interrupted by an overlap marked by angle brackets
+# Layer Alignment: intervals
+#
+# APLS-specific attributes:
+#   Generate: always
+#   Project: phonology
+#
+# Description: 
+#   Annotate segment with the segment that follows it (defined to include
+#     following segment across word boundaries, but not across turn boundaries
+#     or pauses)
+#
+# inputLayer: turn
+# inputLayer: word
+# inputLayer: segment
+# outputLayer: foll segment
 
-import re
-# regular expression for identifying overlaps
-overlapPattern = re.compile("[<>]")
-
-# for each turn in the transcript
-for turn in transcript.list("turns"):
+##For each turn in the transcript
+for turn in transcript.list("turn"):
   if annotator.cancelling: break # cancelled by the user
-    
-  # there's no immediately preceding segment yet
-  lastSegment = None 
   
-  # for each word in the turn 
-  for word in turn.list("transcript"):
-    if annotator.cancelling: break # cancelled by the user   
+  ##For each word in the turn 
+  for word in turn.list("word"):
+    if annotator.cancelling: break # cancelled by the user
+    log("In word " + word.label + " (" + '%.3f' % word.getStart().getOffset() + "-" + '%.3f' % word.getEnd().getOffset() + "s):")
     
-    # if the word is not an overlap
-    if overlapPattern.search(word.label) is None:
-      # for each phone in the word
-      for segment in word.list("segments"):
-        # if there's a previous segment
-        if lastSegment is not None:
-          # tag it
-          tag = lastSegment.createTag(thisLayer.id, segment.label)
-          log("Tagged segment " + lastSegment.label + " with " + segment.label)
-        # remember the immediately preceding segment
-        lastSegment = segment
-          
-    # if the word is an overlap...
-    else:
-      # ...don't remember the immediately preceding segment
-      lastSegment = None
-      log("Did not tag segments in word " + word.label)
+    ##For each segment in the word
+    for segment in word.list("segment"):
+      if annotator.cancelling: break # cancelled by the user
+      
+      ##If non-word-final...
+      if word.end != segment.end:
+        ##Tag with following segment
+        nextSegLabel = segment.next.label
+        tag = segment.createTag("foll segment", nextSegLabel)
+        log("  Tagged word-internal segment " + segment.label + " with " + nextSegLabel)
+      
+      ##If word final...
+      else:
+        ##Determine if next word exists in turn
+        nextWord = word.next
+        if nextWord is not None:
+          ##Only proceed if no pause
+          if word.end == nextWord.start:
+            ##Determine if next word has a first segment
+            nextSegment = nextWord.list("segment")[0]
+            if nextSegment is not None:
+              ##Tag with following segment
+              nextSegLabel = nextSegment.label
+              tag = segment.createTag("foll segment", nextSegLabel)
+              log("  Tagged word-final segment " + segment.label + " with " + nextSegLabel)
