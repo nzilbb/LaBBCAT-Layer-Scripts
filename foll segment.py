@@ -38,10 +38,12 @@ for turn in transcript.list("turn"):
       
       ##If non-word-final...
       if word.end != segment.end:
-        ##Tag with following segment
-        nextSegLabel = segment.next.label
-        tag = segment.createTag("foll segment", nextSegLabel)
-        log("  Tagged word-internal segment " + segment.label + " with " + nextSegLabel)
+        ##Tag with following segment, if it exists
+        nextSeg = segment.next
+        if nextSeg is not None:
+          nextSegLabel = nextSeg.label
+          tag = segment.createTag("foll segment", nextSegLabel)
+          log("  Tagged word-internal segment " + segment.label + " with " + nextSegLabel)
       
       ##If word final...
       else:

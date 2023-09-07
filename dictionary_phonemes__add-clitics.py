@@ -3,12 +3,11 @@
 # (Python-managed LaBB-CAT layer auxiliary)
 #
 # Author: Dan Villarreal and Robert Fromont
-# Date: 1 Aug 2023
-# LaBB-CAT Version: 20230731.1146
+# Date: 6 Sep 2023
+# LaBB-CAT Version: 20230901.1521
 # Layer Scope: word
 # Layer Type: phonological
 # Layer Alignment: none
-# Assumes Existing Layers: turn, word, orthography, orthography_no_clitic, phonemes_no_clitic, dictionary-phonemes
 #
 # APLS-specific attributes:
 #   Generate: always
@@ -19,6 +18,13 @@
 #   Does not override existing annotations (i.e., forms, cliticized or not, 
 #     hard-coded into Unisyn or custom dictionary)
 #
+# inputLayer: turn
+# inputLayer: word
+# inputLayer: orthography
+# inputLayer: orthography_no_clitic
+# inputLayer: phonemes_no_clitic
+# inputLayer: dictionary-phonemes
+# outputLayer: dictionary-phonemes
 
 import re
 clitics = ["'s", "s'", "'d", "'ll", "'ve"]

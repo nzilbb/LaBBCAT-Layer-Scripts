@@ -1,9 +1,31 @@
 #
-# Auxiliary for **unisyn syllables**:
-# Label syllables based on pronounce code:
-# If a pronounce code has syllable breaks, reconstruct syllable alignments from 
-# segments; otherwise, label single syllable with pronounce code.
+# unisyn syllables auxiliary: label syllables based on pronounce code
+# (Python-managed LaBB-CAT layer auxiliary)
 #
+# Author: Dan Villarreal
+# Date: 6 Sep 2023
+# LaBB-CAT Version: 20230901.1521
+# Layer Scope: word
+# Layer Type: phonological
+# Layer Alignment: intervals
+#
+# APLS-specific attributes:
+#   Generate: always
+#   Project: phonology
+#
+# Description: 
+#   If a pronounce code has syllable breaks, reconstruct syllable alignments 
+#     from segments; otherwise, label single syllable with pronounce code
+#   Creates new annotations and overwrites existing annotations (i.e.,
+#     "idiosyncratic pronunciation" pronounce codes)
+#
+# inputLayer: turn
+# inputLayer: word
+# inputLayer: unisyn syllables
+# inputLayer: pronounce
+# inputLayer: segment
+# outputLayer: unisyn syllables
+
 
 from nzilbb.ag import Annotation
 

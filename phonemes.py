@@ -1,12 +1,25 @@
-# Author: Dan Villarreal, daniel.j.villarreal@gmail.com
-# Date: 24 Oct 2022
-# LaBB-CAT Version: 20221013.1114
+#
+# phonemes
+# (Python-managed LaBB-CAT layer)
+#
+# Author: Dan Villarreal
+# Date: 6 Sep 2023
+# LaBB-CAT Version: 20230901.1521
 # Layer Scope: word
 # Layer Type: phonological
 # Layer Alignment: none
-# Assumes Existing Layers: turns, transcript, segments
 #
-# Builds a segmental representation of the word based on aligned segments
+# APLS-specific attributes:
+#   Generate: always
+#   Project: phonology
+#
+# Description: 
+#   Builds a segmental representation of the word based on aligned segments
+#
+# inputLayer: turn
+# inputLayer: word
+# inputLayer: segment
+# outputLayer: phonemes
 
 # for each turn in the transcript
 for turn in transcript.list("turn"):
