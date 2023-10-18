@@ -1,9 +1,9 @@
 #
-# unisyn syllables auxiliary: shift stress markers
+# syllables auxiliary: shift stress markers
 # (Python-managed LaBB-CAT layer auxiliary)
 #
 # Author: Dan Villarreal
-# Date: 3 Oct 2023
+# Date: 18 Oct 2023
 # LaBB-CAT Version: 20231002.1520
 # Layer Scope: word
 # Layer Type: phonological
@@ -19,8 +19,8 @@
 #
 # inputLayer: turn
 # inputLayer: word
-# inputLayer: unisyn syllables
-# outputLayer: unisyn syllables
+# inputLayer: syllables
+# outputLayer: syllables
 
 import re
 # regular expression for identifying non-initial stress markers
@@ -34,10 +34,10 @@ for turn in transcript.list("turn"):
   for word in turn.list("word"):
     if annotator.cancelling: break # cancelled by the user
     
-    ##Get the "unisyn syllables" tags, if any
-    syllList = word.list("unisyn syllables")
+    ##Get the "syllables" tags, if any
+    syllList = word.list("syllables")
     
-    ##Only proceed if there are "unisyn syllables" tags
+    ##Only proceed if there are "syllables" tags
     if syllList is not None:
       
       ##For each syllable in the word

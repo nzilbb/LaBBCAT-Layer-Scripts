@@ -1,10 +1,10 @@
 #
-# unisyn syllables auxiliary: label syllables based on pronounce code
+# syllables auxiliary: label syllables based on pronounce code
 # (Python-managed LaBB-CAT layer auxiliary)
 #
 # Author: Dan Villarreal
-# Date: 6 Sep 2023
-# LaBB-CAT Version: 20230901.1521
+# Date: 18 Oct 2023
+# LaBB-CAT Version: 20231002.1520
 # Layer Scope: word
 # Layer Type: phonological
 # Layer Alignment: intervals
@@ -21,10 +21,10 @@
 #
 # inputLayer: turn
 # inputLayer: word
-# inputLayer: unisyn syllables
+# inputLayer: syllables
 # inputLayer: pronounce
 # inputLayer: segment
-# outputLayer: unisyn syllables
+# outputLayer: syllables
 
 
 from nzilbb.ag import Annotation
@@ -37,20 +37,20 @@ for turn in transcript.list("turn"):
   for word in turn.list("word"):
     if annotator.cancelling: break # cancelled by the user
     
-    ##Get the "unisyn syllables" and "pronounce" tags, if any
-    syllables = word.my("unisyn syllables")
+    ##Get the "syllables" and "pronounce" tags, if any
+    syllables = word.my("syllables")
     pronounce = word.my("pronounce")
     
     ##Only proceed if there is a "pronounce" tag
     if pronounce is not None:
       
-      ##If there are no syllable breaks in the pronounce code, tag unisyn 
-      ##syllables with pronounce code
+      ##If there are no syllable breaks in the pronounce code, tag syllables
+      ##with complete pronounce code
       pronLabel = pronounce.label
       if "-" not in pronLabel:
         ##Create tag if it doesn't exist
         if syllables is None:
-          word.createTag("unisyn syllables", pronLabel)
+          word.createTag("syllables", pronLabel)
           log("Tagged word " + word.label + " with " + pronLabel)
         ##Relabel tag if it does
         else:
@@ -86,6 +86,6 @@ for turn in transcript.list("turn"):
             if currSeg == syllNoStress:
               start = segList[startSeg]
               end = segList[segIdx - 1]
-              newSyll = transcript.createSpan(start, end, "unisyn syllables", syll)
+              newSyll = transcript.createSpan(start, end, "syllables", syll)
               
               log("Tagged word " + word.label + " with " + syll + " between " + '%.3f' % start.getStart().getOffset() + " and " + '%.3f' % end.getEnd().getOffset() + " seconds")

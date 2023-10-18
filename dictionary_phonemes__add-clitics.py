@@ -3,8 +3,8 @@
 # (Python-managed LaBB-CAT layer auxiliary)
 #
 # Author: Dan Villarreal and Robert Fromont
-# Date: 6 Sep 2023
-# LaBB-CAT Version: 20230901.1521
+# Date: 18 Oct 2023
+# LaBB-CAT Version: 20231002.1520
 # Layer Scope: word
 # Layer Type: phonological
 # Layer Alignment: none
@@ -23,8 +23,8 @@
 # inputLayer: orthography
 # inputLayer: orthography_no_clitic
 # inputLayer: phonemes_no_clitic
-# inputLayer: dictionary-phonemes
-# outputLayer: dictionary-phonemes
+# inputLayer: dictionary_phonemes
+# outputLayer: dictionary_phonemes
 
 import re
 clitics = ["'s", "s'", "'d", "'ll", "'ve"]
@@ -44,7 +44,7 @@ for turn in transcript.list("turn"):
     
     ##Don't override existing entries (forms, cliticized or not, hard-coded 
     ##  into Unisyn or custom dictionary)
-    phonemes = word.my("dictionary-phonemes")
+    phonemes = word.my("dictionary_phonemes")
     if phonemes is None:
       
       ##Only proceed if there's an orthography_no_clitic tag
@@ -55,7 +55,7 @@ for turn in transcript.list("turn"):
         orthoLabel = word.my("orthography").label
         
         ##Loop over existing phonemes_no_clitic tag(s)
-        ##N.B. The set of words with no preexisting dictionary-phonemes tag
+        ##N.B. The set of words with no preexisting dictionary_phonemes tag
         ##  *and* no phonemes_no_clitic tag includes those with:
         ##  - a pronounce code
         ##  - no dictionary entry (Unisyn or custom) matching base form (incl.
@@ -113,5 +113,5 @@ for turn in transcript.list("turn"):
               currPhonemes += phonClitic
           
           ##Modify tag
-          tag = word.createTag("dictionary-phonemes", currPhonemes)
+          tag = word.createTag("dictionary_phonemes", currPhonemes)
           log("Tagged word " + orthoLabel + " with " + currPhonemes)

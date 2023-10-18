@@ -1,10 +1,10 @@
 #
-# foll segment
+# foll_segment
 # (Python-managed LaBB-CAT layer)
 #
 # Author: Dan Villarreal
-# Date: 6 Sep 2023
-# LaBB-CAT Version: 20230901.1521
+# Date: 18 Oct 2023
+# LaBB-CAT Version: 20231002.1520
 # Layer Scope: segment
 # Layer Type: phonological
 # Layer Alignment: intervals
@@ -21,7 +21,7 @@
 # inputLayer: turn
 # inputLayer: word
 # inputLayer: segment
-# outputLayer: foll segment
+# outputLayer: foll_segment
 
 ##For each turn in the transcript
 for turn in transcript.list("turn"):
@@ -42,7 +42,7 @@ for turn in transcript.list("turn"):
         nextSeg = segment.next
         if nextSeg is not None:
           nextSegLabel = nextSeg.label
-          tag = segment.createTag("foll segment", nextSegLabel)
+          tag = segment.createTag("foll_segment", nextSegLabel)
           log("  Tagged word-internal segment " + segment.label + " with " + nextSegLabel)
       
       ##If word final...
@@ -57,5 +57,5 @@ for turn in transcript.list("turn"):
             if nextSegment is not None:
               ##Tag with following segment
               nextSegLabel = nextSegment.label
-              tag = segment.createTag("foll segment", nextSegLabel)
+              tag = segment.createTag("foll_segment", nextSegLabel)
               log("  Tagged word-final segment " + segment.label + " with " + nextSegLabel)
