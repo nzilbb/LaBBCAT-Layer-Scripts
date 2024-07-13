@@ -3,7 +3,7 @@
 # (Python-managed LaBB-CAT layer auxiliary)
 #
 # Author: Dan Villarreal
-# Date: 18 Oct 2023
+# Date: 3 Nov 2023
 # LaBB-CAT Version: 20231002.1520
 # Layer Scope: word
 # Layer Type: phonological
@@ -15,7 +15,8 @@
 #
 # Description: 
 #   If a pronounce code has syllable breaks, reconstruct syllable alignments 
-#     from segments; otherwise, label single syllable with pronounce code
+#     from segments; otherwise, label single syllable with pronounce code (as
+#     long as the word has segment annotations)
 #   Creates new annotations and overwrites existing annotations (i.e.,
 #     "idiosyncratic pronunciation" pronounce codes)
 #
@@ -37,15 +38,18 @@ for turn in transcript.list("turn"):
   for word in turn.list("word"):
     if annotator.cancelling: break # cancelled by the user
     
-    ##Get the "syllables" and "pronounce" tags, if any
+    ##Get the "syllables", "pronounce", & "segment" tags, if any
     syllables = word.my("syllables")
     pronounce = word.my("pronounce")
+    segList = word.list("segment")
     
-    ##Only proceed if there is a "pronounce" tag
-    if pronounce is not None:
+    ##Only proceed if there is a "pronounce" tag and "segment" tags
+    if pronounce is not None and segList is not None:
       
       ##If there are no syllable breaks in the pronounce code, tag syllables
-      ##with complete pronounce code
+      ##  with complete pronounce code
+      ##("segment" tags aren't needed for this case, but requiring them prevents
+      ##  isolated syllables from being tagged in otherwise untagged turns)
       pronLabel = pronounce.label
       if "-" not in pronLabel:
         ##Create tag if it doesn't exist
@@ -63,29 +67,25 @@ for turn in transcript.list("turn"):
       
       ##If there are syllable breaks, reconstruct syllables from segments
       else:
-        
-        ##Only proceed if there are "segment" tags
-        segList = word.list("segment")
-        if segList is not None:
           
-          ##Loop over syllables marked in pronounce code
-          segIdx = 0
-          for syll in pronLabel.split("-"):
+        ##Loop over syllables marked in pronounce code
+        segIdx = 0
+        for syll in pronLabel.split("-"):
+          
+          ##Version without stress
+          syllNoStress = syll.replace("'", "").replace('"', '')
+          
+          ##Loop over segments
+          currSeg = ''
+          startSeg = segIdx
+          while currSeg != syllNoStress and segIdx < len(segList):
+            currSeg += segList[segIdx].label
+            segIdx += 1
+          
+          ##If matching, create annotation based on segment anchors
+          if currSeg == syllNoStress:
+            start = segList[startSeg]
+            end = segList[segIdx - 1]
+            newSyll = transcript.createSpan(start, end, "syllables", syll)
             
-            ##Version without stress
-            syllNoStress = syll.replace("'", "").replace('"', '')
-            
-            ##Loop over segments
-            currSeg = ''
-            startSeg = segIdx
-            while currSeg != syllNoStress and segIdx < len(segList):
-              currSeg += segList[segIdx].label
-              segIdx += 1
-            
-            ##If matching, create annotation based on segment anchors
-            if currSeg == syllNoStress:
-              start = segList[startSeg]
-              end = segList[segIdx - 1]
-              newSyll = transcript.createSpan(start, end, "syllables", syll)
-              
-              log("Tagged word " + word.label + " with " + syll + " between " + '%.3f' % start.getStart().getOffset() + " and " + '%.3f' % end.getEnd().getOffset() + " seconds")
+            log("Tagged word " + word.label + " with " + syll + " between " + '%.3f' % start.getStart().getOffset() + " and " + '%.3f' % end.getEnd().getOffset() + " seconds")
