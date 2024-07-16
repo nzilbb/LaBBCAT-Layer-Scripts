@@ -3,7 +3,7 @@
 # (Python-managed LaBB-CAT layer)
 #
 # Author: Dan Villarreal
-# Date: 12 Jul 2024
+# Date: 16 Jul 2024
 # LaBB-CAT Version: 20240702.1253
 # Layer Scope: word
 # Layer Type: text
@@ -14,105 +14,127 @@
 #   Project: phonology
 #
 # Description: 
-#   Annotate word with the following pause within-speaker and across-turn.
+#   Annotate word with the following pause within-speaker and across-utterance.
 #   Only applies to words whose end-anchors have confidence at least 50 (i.e.,
-#   are either force-aligned or set manually). If the word is not turn-final, 
-#   the following word's start-anchor must also have confidence at least 50. 
-#   If the word is turn-final, it will be compared against (a) the first
-#   word in the following turn if that word's start-anchor has confidence 
-#   at least 50, or (b) the start of the following turn otherwise
+#   are either force-aligned or set manually). Word end is compared to:
+#     (a) the start of the following word (if that start-anchor has confidence
+#         at least 50); or
+#     (b) the start of the following utterance (if the word is utterance-
+#         final), in order to cover pre-overlap words; or 
+#     (c) the start of the following turn (if word or next word are missing
+#         utterance tags), as a fallback to utterance---utterance is preferred 
+#         because it more accurately reflects transcribed line breaks; or
+#     (c) untagged (otherwise)
 #
+# inputLayer: participant
+# inputLayer: utterance
 # inputLayer: turn
 # inputLayer: word
 # outputLayer: foll_pause
 
-##For each turn in the transcript
-for turn in transcript.list("turn"):
+def node_string(node, label = True):
+  startEnd = '%.3f' % node.getStart().getOffset() + "-" + '%.3f' % node.getEnd().getOffset()
+  if label:
+    return node.getLabel() + " (" + startEnd + ")"
+  else:
+    return startEnd
+
+##For each participant in the transcript
+for participant in transcript.all("participant"):
+  
   if annotator.cancelling: break # cancelled by the user
   
-  ##For each word in the turn 
-  for word in turn.list("word"):
+  ##Get each word in the participant, sorted by start offset
+  wordList = participant.all("word")
+  wordList = sorted(wordList, key=lambda d: d.getStart().getOffset())
+  numWords = len(wordList)
+  
+  ##For each word (except for the last word)
+  for idx, word in enumerate(wordList[0:(numWords-1)]):
     if annotator.cancelling: break # cancelled by the user
     
     ##Get word end-anchor and end-time
     wordEnd = word.getEnd()
     wordEndTime = wordEnd.getOffset()
     
-    ##Get formatted word string for logging
-    wordString = word.label + " (" + '%.3f' % word.getStart().getOffset() + "-" + '%.3f' % wordEndTime + ")"
-    
     ##Only proceed if confidence is at least 50
     wordEndConf = wordEnd.getConfidence()
     if wordEndConf >= 50:
       
-      ##If next word exists in turn
-      nextWord = word.next
+      ##If next word exists
+      nextWord = wordList[idx+1]
       if nextWord is not None:
         
-        ##Get next word start-anchor
+        ##Get next word start-anchor and start-time
         nextWordStart = nextWord.getStart()
+        nextWordStartTime = nextWordStart.getOffset()
         
-        ##Only proceed if confidence is at least 50
+        ##If next word start-anchor confidence is at least 50
         nextWordStartConf = nextWordStart.getConfidence()
         if nextWordStartConf >= 50:
-          
-          ##Get next word start-time
-          nextWordStartTime = nextWord.getStart().getOffset()
           
           ##Tag with difference
           follPause = str(nextWordStartTime - wordEndTime)
           tag = word.createTag("foll_pause", follPause)
-          log("Tagged word " + wordString + " with " + follPause)
+          log("Tagged word " + node_string(word) + " with " + follPause)
         
-        ##If confidence is too low, log and don't tag
+        ##If next word start-anchor confidence is too low
         else:
-          nextWordString = nextWord.label + " (" + '%.3f' % nextWordStartTime + "-" + '%.3f' % nextWord.getEnd().getOffset() + ")"
-          log("Did not tag turn-internal word " + wordString + "; start confidence for next word - " + nextWordString + " - is " + str(nextWordStartConf))
-      
-      ##If next word does not exist in turn, get first word in next turn
-      else:
-        
-        ##Determine if next turn exists in transcript
-        nextTurn = turn.next
-        if nextTurn is not None:
           
-          ##Determine if next turn has a first word
-          nextWord = nextTurn.first("word")
-          if nextWord is not None:
+          ##Check next word's utterance
+          utterance = word.first("utterance")
+          nextUtterance = nextWord.first("utterance")
+          
+          ##If word's utterance and next word's utterance both exist
+          if utterance is not None and nextUtterance is not None:
             
-            ##Get next word start-anchor
-            nextWordStart = nextWord.getStart()
-            
-            ##If next word start-anchor confidence is at least 50, use it
-            nextWordStartConf = nextWordStart.getConfidence()
-            if nextWordStartConf >= 50:
-              ##Get next word start-time
-              nextWordStartTime = nextWord.getStart().getOffset()
+            ##If word is utterance-final
+            if utterance.getId() != nextUtterance.getId():
+              
+              ##Get next utterance start-time
+              nextUttStartTime = nextUtterance.getStart().getOffset()
               
               ##Tag with difference
-              follPause = str(nextWordStartTime - wordEndTime)
+              follPause = str(nextUttStartTime - wordEndTime)
               tag = word.createTag("foll_pause", follPause)
-              log("Tagged turn-final word " + wordString + " with time to next word: " + follPause)
-            
-            ##Otherwise, use the start of the following turn
+              log("Tagged utterance-final word " + node_string(word) + " with time to next utterance: " + follPause)
+          
+            ##If word is not utterance-final, log and don't tag
             else:
+              log("Did not tag utterance-internal word " + node_string(word) + "; start confidence for next word - " + node_string(nextWord) + " - is " + str(nextWordStartConf))
+          
+          ##If either word's utterance or next word's utterance is missing, use turn instead
+          else:
+            
+            ##Check next word's turn
+            turn = word.getParent()
+            nextTurn = nextWord.getParent()
+            
+            ##If word is turn-final
+            if turn.getId() != nextTurn.getId():
+              
               ##Get next turn start-time
               nextTurnStartTime = nextTurn.getStart().getOffset()
               
               ##Tag with difference
               follPause = str(nextTurnStartTime - wordEndTime)
               tag = word.createTag("foll_pause", follPause)
-              log("Tagged turn-final word " + wordString + " with time to next turn: " + follPause)
-          
-          ##If next turn does not have a first word, log and don't tag
-          else:
-            nextTurnString = "(" + '%.3f' % nextTurn.getStart().getOffset() + "-" + '%.3f' % nextTurn.getEnd().getOffset() + ")"
-            log("Did not tag turn-final word " + wordString + "; next turn " + nextTurnString + " does not have a first word")
+              log("Tagged turn-final word " + node_string(word) + " with time to next turn: " + follPause)
+            
+            ##If word is not turn-final, log and don't tag
+            else:
+              log("Did not tag turn-internal word " + node_string(word) + "; start confidence for next word - " + node_string(nextWord) + " - is " + str(nextWordStartConf))
+      
+      ##If next word does not exist (unexpectedly), log and don't tag
+      else:
         
-        ##If next turn does not exist, log and don't tag
-        else:
-          log("Did not tag turn-final word " + wordString + "; next turn does not exist in transcript")
+        ##Get word ordinal and end-anchor ID
+        wordOrdinal = word.getOrdinal()
+        wordEndId = wordEnd.getId()
+        
+        ##Log
+        log("Did not tag utterance-final word " + node_string(word) + " with id " + wordEndId + " (corpus ordinal: " + str(wordOrdinal) + "; sort order: " + str(idx) + "); next word does not exist in participant")
     
     ##If confidence is too low, log and don't tag
     else:
-      log("Did not tag word " + wordString + "; end confidence is " + str(wordEndConf))
+      log("Did not tag word " + node_string(word) + "; end confidence is " + str(wordEndConf))
