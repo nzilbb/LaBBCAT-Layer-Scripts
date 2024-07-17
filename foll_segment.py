@@ -3,7 +3,7 @@
 # (Python-managed LaBB-CAT layer)
 #
 # Author: Dan Villarreal
-# Date: 12 Jul 2024
+# Date: 16 Jul 2024
 # LaBB-CAT Version: 20240702.1253
 # Layer Scope: segment
 # Layer Type: phonological
@@ -14,80 +14,92 @@
 #   Project: phonology
 #
 # Description: 
-#   Annotate segment with the segment that follows it (defined to include
-#   across turn boundaries). If followed by a pause, annotate with `.`
+#   Annotate segment with the segment that follows it within-participant and
+#   across-utterance. If followed by a pause (a nonzero foll_pause 
+#   annotation), annotate as `.`
 #
-# inputLayer: turn
+# inputLayer: participant
 # inputLayer: word
-# inputLayer: foll_pause
 # inputLayer: segment
+# inputLayer: foll_pause
 # outputLayer: foll_segment
 
-##For each turn in the transcript
-for turn in transcript.list("turn"):
+def node_string(node, label = True):
+  startEnd = '%.3f' % node.getStart().getOffset() + "-" + '%.3f' % node.getEnd().getOffset()
+  if label:
+    return node.getLabel() + " (" + startEnd + ")"
+  else:
+    return startEnd
+
+##For each participant in the transcript
+for participant in transcript.all("participant"):
   if annotator.cancelling: break # cancelled by the user
   
-  ##For each word in the turn 
-  for word in turn.list("word"):
+  ##Get each word in the participant, sorted by start offset
+  wordList = participant.all("word")
+  wordList = sorted(wordList, key=lambda d: d.getStart().getOffset())
+  numWords = len(wordList)
+  
+  ##For each word (except for the last word)
+  for idx, word in enumerate(wordList[0:(numWords-1)]):
     if annotator.cancelling: break # cancelled by the user
-    log("In word " + word.label + " (" + '%.3f' % word.getStart().getOffset() + "-" + '%.3f' % word.getEnd().getOffset() + "s):")
+    
+    log("In word " + node_string(word) + ":")
     
     ##For each segment in the word
-    for segment in word.list("segment"):
+    for segment in word.all("segment"):
       if annotator.cancelling: break # cancelled by the user
       
       ##If non-word-final...
-      if word.end != segment.end:
+      if word.getEnd() != segment.getEnd():
+        
         ##Tag with following segment, if it exists
-        nextSeg = segment.next
+        nextSeg = segment.getNext()
         if nextSeg is not None:
-          nextSegLabel = nextSeg.label
+          nextSegLabel = nextSeg.getLabel()
           tag = segment.createTag("foll_segment", nextSegLabel)
-          log("  Tagged word-internal segment " + segment.label + " with " + nextSegLabel)
+          log("  Tagged word-internal segment " + segment.getLabel() + " with " + nextSegLabel)
       
-      ##If word final...
+      ##If word-final...
       else:
+        
         ##If following pause is 0
         follPause = word.first("foll_pause")
         if follPause is not None:
-          if follPause.label == "0.0" or follPause.label = "0":
-            ##Determine if next word exists in turn
-            nextWord = word.next
+          
+          if follPause.getLabel() == "0.0" or follPause.getLabel() == "0":
+            
+            ##If next word exists
+            nextWord = wordList[idx+1]
             if nextWord is not None:
-              ##Determine if next word has a first segment
-              nextSegments = nextWord.list("segment")
+              
+              ##If next word has a first segment, tag with following segment
+              nextSegments = nextWord.all("segment")
               if len(nextSegments) > 0:
-                ##Tag with following segment
-                nextSegLabel = nextSegments[0].label
+                nextSegLabel = nextSegments[0].getLabel()
                 tag = segment.createTag("foll_segment", nextSegLabel)
-                log("  Tagged word-final segment " + segment.label + " with " + nextSegLabel)
-              ##If no first segment, log but don't tag
+                log("  Tagged word-final segment " + segment.getLabel() + " with " + nextSegLabel)
+                
+              ##If no first segment, log and don't tag
               else:
-                log("  Did not tag word-final segment; next word (" + nextWord.label + " at " + '%.3f' % nextWord.getStart().getOffset() + "-" + '%.3f' % nextWord.getEnd().getOffset() + ") has no segments")
-            ##If next word does not exist in turn, get first word in next turn
+                log("  Did not tag word-final segment " + segment.getLabel() + "; next word - " + node_string(nextWord) + " - has no segments")
+            
+            ##If next word does not exist (unexpectedly), log and don't tag
             else:
-              ##Determine if next turn exists in transcript
-              nextTurn = turn.next
-              if nextTurn is not None:
-                ##Determine if next turn has a first word
-                nextWord = nextTurn.first("word")
-                if nextWord is not None:
-                  ##Determine if next word has a first segment
-                  nextSegments = nextWord.list("segment")
-                  if len(nextSegments) > 0:
-                    ##Tag with following segment
-                    nextSegLabel = nextSegments[0].label
-                    tag = segment.createTag("foll_segment", nextSegLabel)
-                    log("  Tagged word-final segment " + segment.label + " with " + nextSegLabel)
-                  ##If no first segment, log but don't tag
-                  else:
-                    log("  Did not tag word-final segment; next word (" + nextWord.label + " at " + '%.3f' % nextWord.getStart().getOffset() + "-" + '%.3f' % nextWord.getEnd().getOffset() + ") has no segments")
-              ##If next turn does not exist in transcript, log it
-              else:
-                log("  Next turn does not exist in transcript")
-          ##If following pause is nonzero
+              
+              ##Get word ordinal and end-anchor ID
+              wordOrdinal = word.getOrdinal()
+              wordEndId = wordEnd.getId()
+              
+              ##Log
+              log("  Did not tag word-final segment " + segment.getLabel() + " in word with id " + wordEndId + " (corpus ordinal: " + str(wordOrdinal) + "; sort order: " + str(idx) + "); next word does not exist in participant")
+              
+          ##If following pause is nonzero, tag with pause
           else:
-            ##Tag with pause
             nextSegLabel = "."
             tag = segment.createTag("foll_segment", nextSegLabel)
-            log("  Tagged word-final segment " + segment.label + " with " + nextSegLabel)
+            log("  Tagged word-final segment " + segment.getLabel() + " with " + nextSegLabel)
+        
+        ##If following pause does not exist, log and don't tag
+        else:
+          log("  Did not tag word-final segment " + segment.getLabel() + "; following pause does not exist")
