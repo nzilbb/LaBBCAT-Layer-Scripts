@@ -3,8 +3,8 @@
 # (Python-managed LaBB-CAT layer auxiliary)
 #
 # Author: Dan Villarreal and Robert Fromont
-# Date: 18 Oct 2023
-# LaBB-CAT Version: 20231002.1520
+# Date: 1 Aug 2024
+# LaBB-CAT Version: 20240702.1253
 # Layer Scope: word
 # Layer Type: phonological
 # Layer Alignment: none
@@ -35,24 +35,25 @@ sibilant = re.compile(".*[szSZJ_]$")
 cons = re.compile(".*[pbtdkgNmnlrfvTDszSZhJ_FHP]$")
 
 ##For each turn in the transcript
-for turn in transcript.list("turn"):
+for turn in transcript.all("turn"):
   if annotator.cancelling: break # cancelled by the user
   
   ##For each word in the turn 
-  for word in turn.list("word"):
+  for word in turn.all("word"):
     if annotator.cancelling: break # cancelled by the user
     
     ##Don't override existing entries (forms, cliticized or not, hard-coded 
     ##  into Unisyn or custom dictionary)
-    phonemes = word.my("dictionary_phonemes")
+    phonemes = word.first("dictionary_phonemes")
     if phonemes is None:
       
-      ##Only proceed if there's an orthography_no_clitic tag
-      orthoBase = word.my("orthography_no_clitic")
-      if orthoBase is not None:
+      ##Only proceed if there's an orthography and orthography_no_clitic tag
+      ortho = word.first("orthography")
+      orthoBase = word.first("orthography_no_clitic")
+      if ortho is not None and orthoBase is not None:
         
         ##Get orthography label
-        orthoLabel = word.my("orthography").label
+        orthoLabel = ortho.getLabel()
         
         ##Loop over existing phonemes_no_clitic tag(s)
         ##N.B. The set of words with no preexisting dictionary_phonemes tag
@@ -60,10 +61,10 @@ for turn in transcript.list("turn"):
         ##  - a pronounce code
         ##  - no dictionary entry (Unisyn or custom) matching base form (incl.
         ##    redactions)
-        for phonemesBase in word.list("phonemes_no_clitic"):
+        for phonemesBase in word.all("phonemes_no_clitic"):
           ##Get base label and stem phonemes
-          orthoBaseLabel = orthoBase.label
-          currPhonemes = phonemesBase.label
+          orthoBaseLabel = orthoBase.getLabel()
+          currPhonemes = phonemesBase.getLabel()
           
           ##Copy orthography label for tracking progress to orthography_no_clitic
           currOrtho = orthoLabel
