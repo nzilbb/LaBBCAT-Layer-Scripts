@@ -1,10 +1,10 @@
 #
-# syllables auxiliary: shift stress markers
+# syllables auxiliary: handle stress markers
 # (Python-managed LaBB-CAT layer auxiliary)
 #
 # Author: Dan Villarreal
-# Date: 18 Oct 2023
-# LaBB-CAT Version: 20231002.1520
+# Date: 26 Aug 2024
+# LaBB-CAT Version: 20240814.1638
 # Layer Scope: word
 # Layer Type: phonological
 # Layer Alignment: intervals
@@ -14,7 +14,10 @@
 #   Project: phonology
 #
 # Description: 
-#   Shift stress marker (if any) from before vowel to start of syllable
+#   Makes stress markers more consistent by:
+#   - Shifting stress marker (if any) from before vowel to start of syllable
+#   - Adding `0` to start of syllable if there's no stress marker
+#   - Throwing an error if `,` (illegal tertiary-stress marker) is present in syllable
 #   Overwrites existing annotations
 #
 # inputLayer: turn
@@ -24,7 +27,11 @@
 
 import re
 # regular expression for identifying non-initial stress markers
-stressPattern = re.compile("(.+)(['\",])(.*)")
+stressPattern = re.compile("(.+)(['\"0])(.*)")
+# regular expression for identifying the absence of a stress marker
+noStressPattern = re.compile("^[^'\"0]+$")
+# illegal stress marker
+badStress = ","
 
 ##For each turn in the transcript
 for turn in transcript.list("turn"):
@@ -44,13 +51,25 @@ for turn in transcript.list("turn"):
       for syllable in syllList:
         if annotator.cancelling: break # cancelled by the user
         
-        ##If the syllable has a non-initial stress marker
+        ##Throw an error if there's an illegal stress marker
         currLabel = syllable.label
+        if badStress in currLabel:
+          raise ValueError("Illegal stress marker " + badStress + " in word ", word.getLabel())
+        
+        ##If the syllable has a non-initial stress marker
         if stressPattern.match(currLabel): 
           
           ##Move the stress marker to the start of the syllable
           newLabel = re.sub(stressPattern, "\\2\\1\\3", currLabel)
           # syllable.setLabel(newLabel)
+          syllable.label = newLabel
+          log("Changed syllable label " + currLabel + " to " + newLabel)
+        
+        ##If the syllable doesn't have any stress marker
+        elif noStressPattern.match(currLabel):
+          
+          ##Add a 0 stress marker
+          newLabel = "0" + currLabel
           syllable.label = newLabel
           log("Changed syllable label " + currLabel + " to " + newLabel)
 

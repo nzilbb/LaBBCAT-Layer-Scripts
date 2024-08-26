@@ -3,8 +3,8 @@
 # (Python-managed LaBB-CAT layer auxiliary)
 #
 # Author: Dan Villarreal
-# Date: 3 Nov 2023
-# LaBB-CAT Version: 20231002.1520
+# Date: 26 Aug 2024
+# LaBB-CAT Version: 20240814.1638
 # Layer Scope: word
 # Layer Type: phonological
 # Layer Alignment: intervals
@@ -27,8 +27,11 @@
 # inputLayer: segment
 # outputLayer: syllables
 
-
 from nzilbb.ag import Annotation
+import re
+
+# regular expression for identifying the absence of a stress marker
+noStressPattern = re.compile("^[^'\"0]+$")
 
 ##For each turn in the transcript
 for turn in transcript.list("turn"):
@@ -46,12 +49,19 @@ for turn in transcript.list("turn"):
     ##Only proceed if there is a "pronounce" tag and "segment" tags
     if pronounce is not None and segList is not None:
       
+      ##Get "pronounce" annotation
+      pronLabel = pronounce.label 
+      
       ##If there are no syllable breaks in the pronounce code, tag syllables
       ##  with complete pronounce code
       ##("segment" tags aren't needed for this case, but requiring them prevents
       ##  isolated syllables from being tagged in otherwise untagged turns)
-      pronLabel = pronounce.label
       if "-" not in pronLabel:
+        
+        ##Add unstressed marker if needed
+        if noStressPattern.match(pronLabel):
+          pronLabel = "0" + pronLabel
+        
         ##Create tag if it doesn't exist
         if syllables is None:
           word.createTag("syllables", pronLabel)
@@ -71,9 +81,12 @@ for turn in transcript.list("turn"):
         ##Loop over syllables marked in pronounce code
         segIdx = 0
         for syll in pronLabel.split("-"):
-          
           ##Version without stress
-          syllNoStress = syll.replace("'", "").replace('"', '')
+          syllNoStress = syll.replace("'", "").replace('"', '').replace('0', '')
+          
+          ##Add unstressed marker if needed
+          if syll == syllNoStress:
+            syll = "0" + syll
           
           ##Loop over segments
           currSeg = ''
