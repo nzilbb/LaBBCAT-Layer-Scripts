@@ -6,7 +6,7 @@
 # Date: 16 Jul 2024
 # LaBB-CAT Version: 20240702.1253
 # Layer Scope: word
-# Layer Type: text
+# Layer Type: number
 # Layer Alignment: none
 #
 # APLS-specific attributes:

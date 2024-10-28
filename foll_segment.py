@@ -3,8 +3,8 @@
 # (Python-managed LaBB-CAT layer)
 #
 # Author: Dan Villarreal
-# Date: 16 Jul 2024
-# LaBB-CAT Version: 20240702.1253
+# Date: 25 Oct 2024
+# LaBB-CAT Version: 20240920.1237
 # Layer Scope: segment
 # Layer Type: phonological
 # Layer Alignment: intervals
@@ -38,10 +38,9 @@ for participant in transcript.all("participant"):
   ##Get each word in the participant, sorted by start offset
   wordList = participant.all("word")
   wordList = sorted(wordList, key=lambda d: d.getStart().getOffset())
-  numWords = len(wordList)
   
-  ##For each word (except for the last word)
-  for idx, word in enumerate(wordList[0:(numWords-1)]):
+  ##For each word
+  for idx, word in enumerate(wordList):
     if annotator.cancelling: break # cancelled by the user
     
     log("In word " + node_string(word) + ":")
