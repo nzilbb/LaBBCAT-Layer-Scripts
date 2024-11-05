@@ -3,8 +3,8 @@
 # (Python-managed LaBB-CAT layer auxiliary)
 #
 # Author: Dan Villarreal
-# Date: 26 Aug 2024
-# LaBB-CAT Version: 20240814.1638
+# Date: 4 Nov 2024
+# LaBB-CAT Version: 20240920.1237
 # Layer Scope: word
 # Layer Type: phonological
 # Layer Alignment: intervals
@@ -42,12 +42,17 @@ for turn in transcript.list("turn"):
     if annotator.cancelling: break # cancelled by the user
     
     ##Get the "syllables", "pronounce", & "segment" tags, if any
-    syllables = word.my("syllables")
-    pronounce = word.my("pronounce")
-    segList = word.list("segment")
+    syllables = word.all("syllables")
+    pronounce = word.first("pronounce")
+    segList = word.all("segment")
     
     ##Only proceed if there is a "pronounce" tag and "segment" tags
     if pronounce is not None and segList is not None:
+      
+      ##If there are existing syllables tags, remove them
+      if syllables is not None:
+        for syll in syllables:
+          syll.destroy()
       
       ##Get "pronounce" annotation
       pronLabel = pronounce.label 
@@ -62,18 +67,9 @@ for turn in transcript.list("turn"):
         if noStressPattern.match(pronLabel):
           pronLabel = "0" + pronLabel
         
-        ##Create tag if it doesn't exist
-        if syllables is None:
-          word.createTag("syllables", pronLabel)
-          log("Tagged word " + word.label + " with " + pronLabel)
-        ##Relabel tag if it does
-        else:
-          currLabel = syllables.label
-          if currLabel != pronLabel:
-            syllables.label = pronLabel
-            log("In word " + word.label + ", changed syllable label " + currLabel + " to " + pronLabel)
-          else:
-            log("In word " + word.label + ", no need to change syllable label " + currLabel)
+        ##Create tag
+        word.createTag("syllables", pronLabel)
+        log("Tagged word " + word.label + " with " + pronLabel)
       
       ##If there are syllable breaks, reconstruct syllables from segments
       else:
