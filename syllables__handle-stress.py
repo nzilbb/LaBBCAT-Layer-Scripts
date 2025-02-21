@@ -3,8 +3,8 @@
 # (Python-managed LaBB-CAT layer auxiliary)
 #
 # Author: Dan Villarreal
-# Date: 26 Aug 2024
-# LaBB-CAT Version: 20240814.1638
+# Date: 21 Feb 2025
+# LaBB-CAT Version: 20241121.1451
 # Layer Scope: word
 # Layer Type: phonological
 # Layer Alignment: intervals
@@ -54,7 +54,7 @@ for turn in transcript.list("turn"):
         ##Throw an error if there's an illegal stress marker
         currLabel = syllable.label
         if badStress in currLabel:
-          raise ValueError("Illegal stress marker " + badStress + " in word ", word.getLabel())
+          raise ValueError("Illegal stress marker " + badStress + " in word " + word.getLabel())
         
         ##If the syllable has a non-initial stress marker
         if stressPattern.match(currLabel): 
