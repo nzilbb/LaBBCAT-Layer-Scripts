@@ -3,8 +3,8 @@
 # (Python-managed LaBB-CAT layer auxiliary)
 #
 # Author: Dan Villarreal
-# Date: 21 Feb 2025
-# LaBB-CAT Version: 20241121.1451
+# Date: 21 Feb 2026
+# LaBB-CAT Version: 20251105.1346
 # Layer Scope: word
 # Layer Type: phonological
 # Layer Alignment: intervals
@@ -34,18 +34,18 @@ noStressPattern = re.compile("^[^'\"0]+$")
 badStress = ","
 
 ##For each turn in the transcript
-for turn in transcript.list("turn"):
+for turn in transcript.all("turn"):
   if annotator.cancelling: break # cancelled by the user
   
   ##For each word in the turn 
-  for word in turn.list("word"):
+  for word in turn.all("word"):
     if annotator.cancelling: break # cancelled by the user
     
     ##Get the "syllables" tags, if any
-    syllList = word.list("syllables")
+    syllList = word.all("syllables")
     
     ##Only proceed if there are "syllables" tags
-    if syllList is not None:
+    if len(syllList) > 0:
       
       ##For each syllable in the word
       for syllable in syllList:

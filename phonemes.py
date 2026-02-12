@@ -3,8 +3,8 @@
 # (Python-managed LaBB-CAT layer)
 #
 # Author: Dan Villarreal
-# Date: 6 Sep 2023
-# LaBB-CAT Version: 20230901.1521
+# Date: 12 Feb 2026 
+# LaBB-CAT Version: 20251105.1346 
 # Layer Scope: word
 # Layer Type: phonological
 # Layer Alignment: none
@@ -22,18 +22,18 @@
 # outputLayer: phonemes
 
 # for each turn in the transcript
-for turn in transcript.list("turn"):
+for turn in transcript.all("turn"):
   if annotator.cancelling: break # cancelled by the user
   
   # for each word in the turn
-  for word in turn.list("word"):    
+  for word in turn.all("word"):
     if annotator.cancelling: break # cancelled by the user  
     
     # clear wordPhonemes
     wordPhonemes = ""
     
     # for each phone in the word, add to wordPhonemes
-    for segment in word.list("segment"):
+    for segment in word.all("segment"):
       if segment is not None:
         wordPhonemes += segment.label
     

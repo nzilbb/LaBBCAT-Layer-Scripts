@@ -3,8 +3,8 @@
 # (Python-managed LaBB-CAT layer auxiliary)
 #
 # Author: Dan Villarreal
-# Date: 4 Nov 2024
-# LaBB-CAT Version: 20240920.1237
+# Date: 12 Feb 2026
+# LaBB-CAT Version: 20251105.1346
 # Layer Scope: word
 # Layer Type: phonological
 # Layer Alignment: intervals
@@ -34,11 +34,11 @@ import re
 noStressPattern = re.compile("^[^'\"0]+$")
 
 ##For each turn in the transcript
-for turn in transcript.list("turn"):
+for turn in transcript.all("turn"):
   if annotator.cancelling: break # cancelled by the user
   
   ##For each word in the turn 
-  for word in turn.list("word"):
+  for word in turn.all("word"):
     if annotator.cancelling: break # cancelled by the user
     
     ##Get the "syllables", "pronounce", & "segment" tags, if any
@@ -47,10 +47,10 @@ for turn in transcript.list("turn"):
     segList = word.all("segment")
     
     ##Only proceed if there is a "pronounce" tag and "segment" tags
-    if pronounce is not None and segList is not None:
+    if pronounce is not None and len(segList) > 0:
       
       ##If there are existing syllables tags, remove them
-      if syllables is not None:
+      if len(syllables) > 0:
         for syll in syllables:
           syll.destroy()
       
