@@ -20,9 +20,11 @@
 #
 # inputLayer: turn
 # inputLayer: word
+# inputLayer: pronounce
 # inputLayer: orthography
 # inputLayer: orthography_no_clitic
 # inputLayer: syllables_no_clitic
+# inputLayer: segment
 # inputLayer: syllables
 # outputLayer: syllables
 
@@ -33,6 +35,7 @@ clitics = ["'s", "s'", "'d", "'ll", "'ve"]
 voiceless = re.compile(".*[ptkfTsShJ]$")
 sibilant = re.compile(".*[szSZJ_]$")
 cons = re.compile(".*[pbtdkgNmnlrfvTDszSZhJ_FHP]$")
+onsetCons = re.compile("[pbtdkgmnlfvTDszSZhJ_]") ##cons without [NrFHP]
 
 ##For each turn in the transcript
 for turn in transcript.all("turn"):
@@ -44,8 +47,11 @@ for turn in transcript.all("turn"):
     
     ##Don't override existing syllables annotations (which indicates that
     ##  the segments match what's already in Unisyn or custom dictionary)
+    ##  or proceed if there's a pronounce annotation (since this might have
+    ##  a different phonemic representation of a clitic)
     syllables = word.all("syllables")
-    if len(syllables) == 0:      
+    pronounce = word.first("pronounce")
+    if len(syllables) == 0 and pronounce is None:      
       ##Only proceed if there's orthography, orthography_no_clitic, and syllables_no_clitic annotations
       ortho = word.first("orthography")
       orthoBase = word.first("orthography_no_clitic")
@@ -60,6 +66,9 @@ for turn in transcript.all("turn"):
         
         ##Loop over existing syllables_no_clitic tag(s)
         for baseSyll in syllablesBase:
+          ##Reset phonClitic
+          phonClitic = ""
+          
           ##Get stem phones
           currPhones = baseSyll.getLabel()
           
@@ -80,7 +89,7 @@ for turn in transcript.all("turn"):
               phonClitic = None
               if currClitic == "'s":
                 if sibilant.match(currPhones):
-                  phonClitic = "@z"
+                  phonClitic = "0@z"
                 elif voiceless.match(currPhones):
                   phonClitic = "s"
                 else:
@@ -88,7 +97,7 @@ for turn in transcript.all("turn"):
               
               if currClitic == "s'":
                 if sibilant.match(currPhones):
-                  phonClitic = ["@z", ""]
+                  phonClitic = "0@z"
                 elif voiceless.match(currPhones):
                   phonClitic = "s"
                 else:
@@ -96,23 +105,59 @@ for turn in transcript.all("turn"):
               
               if currClitic == "'d":
                 if cons.match(currPhones):
-                  phonClitic = "@d"
+                  phonClitic = "0@d"
                 else:
                   phonClitic = "d"
               
               if currClitic == "'ll":
-                phonClitic = "P"
+                phonClitic = "0P"
               
               if currClitic == "'ve":
-                phonClitic = "@v"
+                phonClitic = "0@v"
               
               ##Update currPhones and currOrtho
               currOrtho = re.sub(currClitic + "$", "", currOrtho)
-              if type(phonClitic) is list:
-                currPhones = [currPhones + x for x in phonClitic]
-              else:
-                currPhones += phonClitic
+              currPhones += phonClitic
           
-          ##Add syllables annotation
-          newSyll = transcript.createSpan(baseSyll, baseSyll, "syllables", currPhones)
-          log("Tagged word " + word.label + " with " + currPhones + " between " + '%.3f' % baseSyll.getStart().getOffset() + " and " + '%.3f' % baseSyll.getEnd().getOffset() + " seconds")
+          ##Add syllables annotation(s)
+          ##Clitic creates new syllable
+          if len(phonClitic) > 0 and phonClitic[0] == "0":
+            ##Get list of segments for timing
+            segList = word.all("segment")
+            
+            ##Get version without stress
+            cliticNoStress = phonClitic[1:]
+            
+            ##Get final segment annotation of stem
+            trackSyll = ""
+            segIdx = len(segList) - 1
+            while trackSyll != cliticNoStress:
+              trackSyll = segList[segIdx].getLabel() + trackSyll
+              segIdx -= 1
+            stemFinalSeg = segList[segIdx]
+            
+            ##If stem-final segment is an onset consonant, tag the stem-final syllable minus that segment as one syllable, then that segment plus the clitic as another syllable
+            if onsetCons.match(stemFinalSeg.getLabel()):
+              end1 = segList[segIdx-1]
+              start2 = stemFinalSeg
+              label2 = stemFinalSeg.getLabel() + phonClitic
+              
+            ##If stem-final segment isn't an onset consonant, tag the stem-final syllable as one syllable, then the clitic as another syllable
+            else:
+              end1 = stemFinalSeg
+              start2 = segList[segIdx+1]
+              label2 = phonClitic
+            
+            ##Add annotations
+            label1 = re.sub(label2, "", currPhones)
+            start1 = baseSyll
+            end2 = baseSyll
+            newSyll1 = transcript.createSpan(start1, end1, "syllables", label1)
+            log("Tagged word " + word.label + " with " + label1 + " between " + '%.3f' % start1.getStart().getOffset() + " and " + '%.3f' % end1.getEnd().getOffset() + " seconds (split syllable)")
+            newSyll2 = transcript.createSpan(start2, end2, "syllables", label2)
+            log("Tagged word " + word.label + " with " + label2 + " between " + '%.3f' % start2.getStart().getOffset() + " and " + '%.3f' % end2.getEnd().getOffset() + " seconds (split syllable)")
+            
+          ##Clitic doesn't create new syllable
+          else:
+            newSyll = transcript.createSpan(baseSyll, baseSyll, "syllables", currPhones)
+            log("Tagged word " + word.label + " with " + currPhones + " between " + '%.3f' % baseSyll.getStart().getOffset() + " and " + '%.3f' % baseSyll.getEnd().getOffset() + " seconds")
