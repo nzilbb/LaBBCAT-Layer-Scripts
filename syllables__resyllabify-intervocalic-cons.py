@@ -3,7 +3,7 @@
 # (Python-managed LaBB-CAT layer auxiliary)
 #
 # Author: Dan Villarreal
-# Date: 4 Mar 2026
+# Date: 21 Apr 2026
 # LaBB-CAT Version: 20251105.1346
 # Layer Scope: word
 # Layer Type: phonological
@@ -13,12 +13,16 @@
 #   Generate: always
 #   Project: phonology
 #
-# Description: 
+# Description:
+#   Resyllabifies intervocalic consonsants in order to make Unisyn-like
+#     syllable boundaries (which coincide with morpheme boundaries) more
+#     like CELEX syllable boundaries.
 #   For adjacent syllables in the same word, if the first syllable ends in a
-#     vowel+consonant and the second begins with a vowel, shifts the end/start
-#     and relabels annotations to place the consonant in the second syllable.
-#   This makes Unisyn-like syllable boundaries (which coincide with morpheme
-#     boundaries) more like CELEX syllable boundaries.
+#     vowel+consonant (other than r or ng) and the second begins with a vowel,
+#     shifts the end/start and relabels annotations to place the consonant in
+#     the second syllable.
+#   If the first syllable ends with a vowel and the second begins with an r,
+#     places the r in the first syllable.
 #
 # inputLayer: turn
 # inputLayer: word
@@ -29,8 +33,13 @@
 import re
 
 ##Pronunciation regexes
-coda = re.compile(".*[iIE\{Q\$VUu@78#3912645][pbtdkgmnlrfvTDszSZhJ_]$") ##Cons: excludes [NFHP]
-onset = re.compile("^['\"0][iIE\{Q\$VUu@78#3912645FHP].*") ##Vowels: includes [FHP]
+ons_v  = "[iIE\{Q\$VUu@78#3912645]"
+coda_v = "[iIE\{Q\$VUu@78#3912645FHP]"
+
+final_CV = re.compile(".*" + coda_v + "[pbtdkgmnlfvTDszSZhJ_]$") ##Coda cons: excludes [NFHPr]
+initial_V = re.compile("^['\"0]" + ons_v + ".*")
+final_V = re.compile(".*" + coda_v + "$")
+initial_rV = re.compile("^['\"0]r" + ons_v + ".*")
 
 ##For each turn in the transcript
 for turn in transcript.all("turn"):
@@ -47,8 +56,7 @@ for turn in transcript.all("turn"):
       follLabel = foll.getLabel()
       
       ##If intervocalic consonant is syllabified as coda rather than onset
-      if coda.match(prevLabel) and onset.match(follLabel):
-        
+      if final_CV.match(prevLabel) and initial_V.match(follLabel):
         ##Construct new labels
         newPrevLabel = prevLabel[:-1]
         newFollLabel = follLabel[0] + prevLabel[-1] + follLabel[1:]
@@ -62,4 +70,22 @@ for turn in transcript.all("turn"):
         foll.setLabel(newFollLabel)
         prev.setEnd(newBound)
         foll.setStart(newBound)
-        log("In word " + word.getLabel() + ", changed " + prevLabel + "-" + follLabel + " to " + newPrevLabel + "-" + newFollLabel + " (boundary shift from " + '%.3f' % oldBound.getOffset() + " to " + '%.3f' % newBound.getOffset() + " seconds)")
+        log("In word " + word.getLabel() + ", changed " + prevLabel + "-" + follLabel + " to " + newPrevLabel + "-" + newFollLabel + " (boundary shift backward from " + '%.3f' % oldBound.getOffset() + " to " + '%.3f' % newBound.getOffset() + " seconds)")
+      
+      ##If intervocalic r is syllabified as onset rather than coda
+      if final_V.match(prevLabel) and initial_rV.match(follLabel):
+        log(prevLabel + " " + follLabel)
+        ##Construct new labels
+        newPrevLabel = prevLabel + follLabel[1]
+        newFollLabel = follLabel[0] + follLabel[2:]
+        
+        ##Get old and new boundaries
+        oldBound = prev.getEnd()
+        newBound = foll.all("segment")[0].getEnd() ##For some reason, foll.first("segment") is NoneType
+                
+        ##Modify annotations
+        prev.setLabel(newPrevLabel)
+        foll.setLabel(newFollLabel)
+        prev.setEnd(newBound)
+        foll.setStart(newBound)
+        log("In word " + word.getLabel() + ", changed " + prevLabel + "-" + follLabel + " to " + newPrevLabel + "-" + newFollLabel + " (boundary shift forward from " + '%.3f' % oldBound.getOffset() + " to " + '%.3f' % newBound.getOffset() + " seconds)")
